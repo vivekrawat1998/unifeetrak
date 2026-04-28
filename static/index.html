@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>UniFeeTrak — University Fee Management</title>
+
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Instrument+Serif:ital@0;1&family=Geist+Mono:wght@400;500;600&family=Geist:wght@300;400;500;600&display=swap"
+        rel="stylesheet" />
+
+    <!-- Application stylesheet -->
+    <link rel="stylesheet" href="/static/css/style.css" />
+</head>
+
+<body>
+
+    <!-- ════════════════════════════════════════════════════════════════════════
+       PAGE HEADER  (sticky navigation bar)
+  ═══════════════════════════════════════════════════════════════════════════ -->
+    <header class="page-header">
+        <a class="logo" href="/">
+            <span class="logo-mark">UniFeeTrak</span>
+            <span class="logo-sep">/</span>
+            <span class="logo-sub">Fee Management</span>
+        </a>
+        <div class="header-right">
+            <!-- Current selected period — updated by JS -->
+            <div id="js-period" class="period-badge">Loading…</div>
+        </div>
+    </header>
+
+
+    <!-- ════════════════════════════════════════════════════════════════════════
+       MAIN CONTENT
+  ═══════════════════════════════════════════════════════════════════════════ -->
+    <main>
+
+        <!-- ── Stat Cards ──────────────────────────────────────────────────── -->
+        <div class="stats-row">
+
+            <div class="stat stat--total">
+                <div class="stat__label">Total Students</div>
+                <div class="stat__value" id="stat-total">—</div>
+                <div class="stat__sub">enrolled this period</div>
+            </div>
+
+            <div class="stat stat--paid">
+                <div class="stat__label">Paid</div>
+                <div class="stat__value" id="stat-paid">—</div>
+                <div class="stat__sub">fees received</div>
+            </div>
+
+            <div class="stat stat--unpaid">
+                <div class="stat__label">Defaulters</div>
+                <div class="stat__value" id="stat-unpaid">—</div>
+                <div class="stat__sub">fees pending</div>
+            </div>
+
+            <div class="stat">
+                <div class="stat__label">Total Collected</div>
+                <div class="stat__value" id="stat-collected" style="font-size:1.5rem">—</div>
+                <div class="stat__sub">this month</div>
+            </div>
+
+        </div><!-- /stats-row -->
+
+
+        <!-- ── Controls / Filters Bar ──────────────────────────────────────── -->
+        <div class="controls-card">
+
+            <!-- Time filters — changing these triggers an API call -->
+            <div class="ctrl-group">
+                <span class="ctrl-label">Month</span>
+                <select id="ctrl-month"></select>
+            </div>
+            <div class="ctrl-group">
+                <span class="ctrl-label">Year</span>
+                <select id="ctrl-year"></select>
+            </div>
+
+            <div class="ctrl-sep"></div>
+
+            <!-- Column filters — client-side, no extra API call -->
+            <div class="ctrl-group">
+                <span class="ctrl-label">Batch</span>
+                <select id="ctrl-batch">
+                    <option value="">All Batches</option>
+                </select>
+            </div>
+            <div class="ctrl-group">
+                <span class="ctrl-label">Semester</span>
+                <select id="ctrl-semester">
+                    <option value="">All Semesters</option>
+                </select>
+            </div>
+            <div class="ctrl-group">
+                <span class="ctrl-label">Status</span>
+                <select id="ctrl-status">
+                    <option value="">All</option>
+                    <option value="Paid">Paid</option>
+                    <option value="Unpaid">Unpaid</option>
+                </select>
+            </div>
+
+            <div class="spacer"></div>
+
+            <!-- Action buttons -->
+            <button class="btn btn-outline" onclick="StudentsModal.open()">
+                <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"
+                    aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                </svg>
+                Upload Students
+            </button>
+
+            <button class="btn btn-outline" onclick="FeesModal.open()">
+                <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"
+                    aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12" />
+                </svg>
+                Upload Fees
+            </button>
+
+            <button class="btn btn-primary" onclick="Exporter.download()">
+                <svg width="13" height="13" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"
+                    aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" />
+                </svg>
+                Download Data
+            </button>
+
+        </div><!-- /controls-card -->
+
+
+        <!-- ── Table Toolbar ────────────────────────────────────────────────── -->
+        <div class="table-toolbar">
+            <div class="table-title">
+                Student Fee Records
+                <span class="count-badge" id="js-count">0 records</span>
+            </div>
+            <div class="spacer"></div>
+            <div class="search-box">
+                <svg width="12" height="12" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"
+                    aria-hidden="true">
+                    <circle cx="11" cy="11" r="8" />
+                    <path stroke-linecap="round" d="M21 21l-4.35-4.35" />
+                </svg>
+                <input type="text" id="ctrl-search" placeholder="Search name, roll number…" autocomplete="off" />
+            </div>
+        </div>
+
+
+        <!-- ── Main Data Table ──────────────────────────────────────────────── -->
+        <div class="table-panel">
+            <div class="table-scroll">
+                <table>
+                    <thead>
+                        <tr>
+                            <th class="sortable" data-col="name">
+                                Name <span class="sort-arrow"></span>
+                            </th>
+                            <th class="sortable" data-col="roll_number">
+                                Roll No <span class="sort-arrow"></span>
+                            </th>
+                            <th class="sortable" data-col="batch_name">
+                                Batch <span class="sort-arrow"></span>
+                            </th>
+                            <th class="sortable" data-col="semester">
+                                Semester <span class="sort-arrow"></span>
+                            </th>
+                            <th class="sortable" data-col="fee_status">
+                                Fee Status <span class="sort-arrow"></span>
+                            </th>
+                            <th class="sortable" data-col="amount_paid">
+                                Amount Paid <span class="sort-arrow"></span>
+                            </th>
+                            <th>Payment Date</th>
+                        </tr>
+                    </thead>
+                    <tbody id="js-tbody">
+                        <!-- Initial loading state — replaced by JS -->
+                        <tr>
+                            <td colspan="7" class="state-cell">
+                                <div class="spinner"></div>
+                                <p>Loading student records…</p>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div><!-- /table-scroll -->
+
+            <!-- Pagination bar -->
+            <div class="pagination">
+                <span class="pg-info" id="js-pg-info">—</span>
+                <div id="js-pg-btns"></div>
+            </div>
+
+        </div><!-- /table-panel -->
+
+    </main>
+
+
+    <!-- ════════════════════════════════════════════════════════════════════════
+       MODALS
+  ═══════════════════════════════════════════════════════════════════════════ -->
+
+    <!-- Students CSV Upload Modal -->
+    <div class="modal-bg" id="modal-students">
+        <div class="modal" role="dialog" aria-modal="true" aria-labelledby="m-s-title">
+
+            <div class="modal-title" id="m-s-title">Upload Students CSV</div>
+            <div class="modal-sub">Step 1 of 2 &mdash; Always upload students before fees CSV</div>
+
+            <div class="csv-hint">
+                <b>Required columns:</b><br>
+                name &nbsp;&middot;&nbsp; roll_number &nbsp;&middot;&nbsp; batch_name &nbsp;&middot;&nbsp;
+                semester<br><br>
+                <b>batch_name examples:</b><br>
+                2025 &ndash; Aug - B.Tech CSE &nbsp;&middot;&nbsp; 2025 &ndash; Aug - B.Tech ME &nbsp;&middot;&nbsp;
+                2025 &ndash; Aug - B.Tech CE<br><br>
+                <b>semester examples:</b><br>
+                B.Tech CSE &ndash; Sem 1 &nbsp;&middot;&nbsp; B.Tech ME &ndash; Sem 2 &nbsp;&middot;&nbsp; B.Tech CE
+                &ndash; Sem 3
+            </div>
+
+            <div class="drop-zone" id="dz-s" onclick="document.getElementById('fi-s').click()">
+                <input type="file" id="fi-s" accept=".csv" />
+                <svg width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"
+                    style="color:var(--ink-3);margin:0 auto;display:block" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+                </svg>
+                <div class="dz-text">Click to browse or drag &amp; drop a .csv file</div>
+                <div class="dz-name" id="fn-s"></div>
+            </div>
+
+            <div class="upload-result" id="ur-s"></div>
+
+            <div class="modal-actions">
+                <button class="btn btn-ghost" onclick="StudentsModal.close()">Cancel</button>
+                <button class="btn btn-primary" id="btn-s" onclick="StudentsModal.submit()">
+                    Upload &amp; Process
+                </button>
+            </div>
+
+        </div>
+    </div><!-- /modal-students -->
+
+
+    <!-- Fees CSV Upload Modal -->
+    <div class="modal-bg" id="modal-fees">
+        <div class="modal" role="dialog" aria-modal="true" aria-labelledby="m-f-title">
+
+            <div class="modal-title" id="m-f-title">Upload Fees CSV</div>
+            <div class="modal-sub">Step 2 of 2 &mdash; Students must exist before uploading fees</div>
+
+            <div class="csv-hint">
+                <b>Required columns:</b><br>
+                roll_number &nbsp;&middot;&nbsp; month &nbsp;&middot;&nbsp; year &nbsp;&middot;&nbsp;
+                amount_paid<br><br>
+                <b>Optional column:</b><br>
+                payment_date (YYYY-MM-DD) &mdash; defaults to today if blank<br><br>
+                <b>Example row:</b><br>
+                CSE25001, 4, 2026, 15000, 2026-04-10
+            </div>
+
+            <div class="drop-zone" id="dz-f" onclick="document.getElementById('fi-f').click()">
+                <input type="file" id="fi-f" accept=".csv" />
+                <svg width="30" height="30" fill="none" stroke="currentColor" stroke-width="1.5" viewBox="0 0 24 24"
+                    style="color:var(--ink-3);margin:0 auto;display:block" aria-hidden="true">
+                    <path stroke-linecap="round" stroke-linejoin="round"
+                        d="M3 16.5v2.25A2.25 2.25 0 005.25 21h13.5A2.25 2.25 0 0021 18.75V16.5m-13.5-9L12 3m0 0l4.5 4.5M12 3v13.5" />
+                </svg>
+                <div class="dz-text">Click to browse or drag &amp; drop a .csv file</div>
+                <div class="dz-name" id="fn-f"></div>
+            </div>
+
+            <div class="upload-result" id="ur-f"></div>
+
+            <div class="modal-actions">
+                <button class="btn btn-ghost" onclick="FeesModal.close()">Cancel</button>
+                <button class="btn btn-primary" id="btn-f" onclick="FeesModal.submit()">
+                    Upload &amp; Process
+                </button>
+            </div>
+
+        </div>
+    </div><!-- /modal-fees -->
+
+
+    <!-- Toast notification container -->
+    <div id="toast-root" aria-live="polite"></div>
+
+
+    <!-- Application script — loaded at end of body so DOM is ready -->
+    <script src="/static/js/app.js"></script>
+
+</body>
+
+</html>

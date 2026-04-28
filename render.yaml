@@ -1,0 +1,50 @@
+# =============================================================================
+# render.yaml  —  Render.com Infrastructure-as-Code
+# =============================================================================
+# Defines:
+#   • A PostgreSQL database  (free tier)
+#   • A Python web service   (free tier)
+#
+# Deploy steps:
+#   1. Push this repo to GitHub
+#   2. Go to https://dashboard.render.com → New → Blueprint
+#   3. Connect your GitHub repo — Render reads this file automatically
+#   4. Click "Apply" — both the DB and web service are created for you
+# =============================================================================
+
+databases:
+  - name: unifeetrak-db
+    databaseName: unifeetrak
+    user: unifeetrak
+    plan: free
+
+services:
+  - type: web
+    name: unifeetrak
+    plan: free
+    runtime: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: gunicorn app:application --workers 2 --bind 0.0.0.0:$PORT --timeout 120
+    envVars:
+      - key: DB_HOST
+        fromDatabase:
+          name: unifeetrak-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: unifeetrak-db
+          property: port
+      - key: DB_NAME
+        fromDatabase:
+          name: unifeetrak-db
+          property: database
+      - key: DB_USER
+        fromDatabase:
+          name: unifeetrak-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: unifeetrak-db
+          property: password
+      - key: PYTHON_VERSION
+        value: "3.11.0"

@@ -1,0 +1,884 @@
+/* =============================================================================
+   UniFeeTrak — Main Stylesheet
+   static/css/style.css
+   =============================================================================
+   Table of Contents
+   1.  Design Tokens (CSS Variables)
+   2.  Base Reset
+   3.  Page Header
+   4.  Layout
+   5.  Stat Cards
+   6.  Controls / Filters Bar
+   7.  Form Elements  (select, input)
+   8.  Buttons
+   9.  Table Toolbar
+   10. Table Panel
+   11. Table — thead / tbody
+   12. Cell Type Styles
+   13. Status Badges
+   14. Empty & Loading States
+   15. Pagination
+   16. Upload Modals
+   17. Toast Notifications
+   18. Responsive
+============================================================================= */
+
+
+/* ── 1. Design Tokens ──────────────────────────────────────────────────────── */
+:root {
+    /* Surfaces */
+    --bg: #f4f2ed;
+    --surface: #ffffff;
+    --surface-2: #f9f7f4;
+    --surface-3: #f1efe9;
+
+    /* Borders */
+    --border: #e3dfd6;
+    --border-dk: #ccc7bc;
+
+    /* Text */
+    --ink: #1a1915;
+    --ink-2: #56534b;
+    --ink-3: #999590;
+
+    /* Accent */
+    --accent: #2952d9;
+    --accent-dk: #1d3fa8;
+    --accent-lt: #eef1fd;
+
+    /* Semantic colours */
+    --green: #15803d;
+    --green-bg: #f0fdf4;
+    --green-bd: #bbf7d0;
+    --red: #c82020;
+    --red-bg: #fef2f2;
+    --red-bd: #fecaca;
+
+    /* Border-radius scale */
+    --r-xs: 4px;
+    --r-sm: 7px;
+    --r: 11px;
+    --r-lg: 16px;
+
+    /* Shadows */
+    --sh-sm: 0 1px 4px rgba(0, 0, 0, .07), 0 1px 2px rgba(0, 0, 0, .04);
+    --sh: 0 4px 16px rgba(0, 0, 0, .08), 0 1px 4px rgba(0, 0, 0, .05);
+
+    /* Typography */
+    --font: 'Geist', sans-serif;
+    --mono: 'Geist Mono', monospace;
+    --serif: 'Instrument Serif', serif;
+
+    /* Transition */
+    --t: .16s ease;
+}
+
+
+/* ── 2. Base Reset ─────────────────────────────────────────────────────────── */
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+}
+
+html {
+    font-size: 15px;
+    scroll-behavior: smooth;
+}
+
+body {
+    font-family: var(--font);
+    background: var(--bg);
+    color: var(--ink);
+    min-height: 100vh;
+}
+
+button {
+    font-family: inherit;
+}
+
+
+/* ── 3. Page Header ────────────────────────────────────────────────────────── */
+.page-header {
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    padding: 0 2rem;
+    height: 58px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    position: sticky;
+    top: 0;
+    z-index: 200;
+    box-shadow: var(--sh-sm);
+}
+
+.logo {
+    display: flex;
+    align-items: baseline;
+    gap: .55rem;
+    text-decoration: none;
+}
+
+.logo-mark {
+    font-family: var(--serif);
+    font-size: 1.3rem;
+    color: var(--ink);
+    letter-spacing: -.015em;
+}
+
+.logo-sep {
+    color: var(--border-dk);
+    font-size: .85rem;
+}
+
+.logo-sub {
+    font-family: var(--mono);
+    font-size: .68rem;
+    color: var(--ink-3);
+    text-transform: uppercase;
+    letter-spacing: .12em;
+}
+
+.header-right {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+}
+
+.period-badge {
+    font-family: var(--mono);
+    font-size: .72rem;
+    color: var(--ink-2);
+    background: var(--surface-3);
+    border: 1px solid var(--border);
+    padding: .28rem .75rem;
+    border-radius: 20px;
+}
+
+
+/* ── 4. Layout ─────────────────────────────────────────────────────────────── */
+main {
+    max-width: 1440px;
+    margin: 0 auto;
+    padding: 1.6rem 2rem 4rem;
+}
+
+
+/* ── 5. Stat Cards ─────────────────────────────────────────────────────────── */
+.stats-row {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: .85rem;
+    margin-bottom: 1.4rem;
+}
+
+.stat {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r);
+    padding: 1.1rem 1.3rem 1.2rem;
+    box-shadow: var(--sh-sm);
+    position: relative;
+    overflow: hidden;
+}
+
+/* Coloured top accent stripe */
+.stat::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    height: 3px;
+    background: var(--border);
+    border-radius: var(--r) var(--r) 0 0;
+}
+
+.stat--paid::before {
+    background: var(--green);
+}
+
+.stat--unpaid::before {
+    background: var(--red);
+}
+
+.stat--total::before {
+    background: var(--accent);
+}
+
+.stat__label {
+    font-size: .67rem;
+    text-transform: uppercase;
+    letter-spacing: .1em;
+    color: var(--ink-3);
+    font-family: var(--mono);
+    margin-bottom: .55rem;
+}
+
+.stat__value {
+    font-family: var(--serif);
+    font-size: 2.1rem;
+    line-height: 1;
+    color: var(--ink);
+}
+
+.stat--paid .stat__value {
+    color: var(--green);
+}
+
+.stat--unpaid .stat__value {
+    color: var(--red);
+}
+
+.stat--total .stat__value {
+    color: var(--accent);
+}
+
+.stat__sub {
+    font-size: .7rem;
+    font-family: var(--mono);
+    color: var(--ink-3);
+    margin-top: .3rem;
+}
+
+
+/* ── 6. Controls / Filters Bar ─────────────────────────────────────────────── */
+.controls-card {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r);
+    padding: .8rem 1.2rem;
+    display: flex;
+    align-items: center;
+    gap: .65rem;
+    flex-wrap: wrap;
+    margin-bottom: .85rem;
+    box-shadow: var(--sh-sm);
+}
+
+.ctrl-group {
+    display: flex;
+    align-items: center;
+    gap: .35rem;
+}
+
+.ctrl-label {
+    font-size: .66rem;
+    font-family: var(--mono);
+    text-transform: uppercase;
+    letter-spacing: .09em;
+    color: var(--ink-3);
+    white-space: nowrap;
+}
+
+.ctrl-sep {
+    width: 1px;
+    height: 22px;
+    background: var(--border-dk);
+    flex-shrink: 0;
+    margin: 0 .1rem;
+}
+
+.spacer {
+    flex: 1;
+    min-width: .5rem;
+}
+
+
+/* ── 7. Form Elements ──────────────────────────────────────────────────────── */
+select,
+input[type="text"] {
+    font-family: var(--font);
+    font-size: .82rem;
+    color: var(--ink);
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--r-sm);
+    padding: .35rem .65rem;
+    outline: none;
+    transition: border-color var(--t), box-shadow var(--t);
+    cursor: pointer;
+}
+
+select:focus,
+input[type="text"]:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(41, 82, 217, .1);
+}
+
+
+/* ── 8. Buttons ────────────────────────────────────────────────────────────── */
+.btn {
+    display: inline-flex;
+    align-items: center;
+    gap: .38rem;
+    padding: .4rem .85rem;
+    border-radius: var(--r-sm);
+    border: 1px solid transparent;
+    font-size: .81rem;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background var(--t), border-color var(--t), transform .1s;
+    white-space: nowrap;
+    line-height: 1.4;
+}
+
+.btn:active {
+    transform: scale(.97);
+}
+
+.btn svg {
+    flex-shrink: 0;
+}
+
+.btn-primary {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent-dk);
+}
+
+.btn-primary:hover {
+    background: var(--accent-dk);
+}
+
+.btn-outline {
+    background: var(--surface);
+    color: var(--ink);
+    border-color: var(--border-dk);
+}
+
+.btn-outline:hover {
+    background: var(--surface-2);
+}
+
+.btn-ghost {
+    background: transparent;
+    color: var(--ink-2);
+    border-color: transparent;
+}
+
+.btn-ghost:hover {
+    background: var(--surface-3);
+}
+
+
+/* ── 9. Table Toolbar ──────────────────────────────────────────────────────── */
+.table-toolbar {
+    display: flex;
+    align-items: center;
+    gap: .75rem;
+    margin-bottom: .65rem;
+    flex-wrap: wrap;
+}
+
+.table-title {
+    font-family: var(--serif);
+    font-size: 1.05rem;
+    display: flex;
+    align-items: center;
+    gap: .5rem;
+}
+
+.count-badge {
+    font-family: var(--mono);
+    font-size: .66rem;
+    color: var(--ink-3);
+    background: var(--surface-3);
+    border: 1px solid var(--border);
+    padding: .12rem .5rem;
+    border-radius: 20px;
+}
+
+.search-box {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.search-box svg {
+    position: absolute;
+    left: .52rem;
+    color: var(--ink-3);
+    pointer-events: none;
+}
+
+.search-box input {
+    padding-left: 1.9rem;
+    width: 220px;
+}
+
+
+/* ── 10. Table Panel ───────────────────────────────────────────────────────── */
+.table-panel {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r);
+    box-shadow: var(--sh-sm);
+    overflow: hidden;
+}
+
+.table-scroll {
+    overflow-x: auto;
+}
+
+
+/* ── 11. Table — thead / tbody ─────────────────────────────────────────────── */
+table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+thead th {
+    padding: .58rem 1rem;
+    font-size: .65rem;
+    font-family: var(--mono);
+    text-transform: uppercase;
+    letter-spacing: .09em;
+    color: var(--ink-3);
+    font-weight: 500;
+    text-align: left;
+    background: var(--surface-2);
+    border-bottom: 1px solid var(--border);
+    white-space: nowrap;
+    user-select: none;
+}
+
+thead th.sortable {
+    cursor: pointer;
+}
+
+thead th.sortable:hover {
+    color: var(--ink);
+    background: var(--surface-3);
+}
+
+/* Sort direction arrows */
+.sort-arrow {
+    margin-left: .2rem;
+    opacity: .3;
+    font-size: .68rem;
+    display: inline;
+}
+
+th.asc .sort-arrow,
+th.desc .sort-arrow {
+    opacity: 1;
+}
+
+th:not(.asc):not(.desc) .sort-arrow::after {
+    content: '⇅';
+}
+
+th.asc .sort-arrow::after {
+    content: '↑';
+}
+
+th.desc .sort-arrow::after {
+    content: '↓';
+}
+
+tbody tr {
+    border-bottom: 1px solid var(--border);
+    transition: background var(--t);
+}
+
+tbody tr:last-child {
+    border-bottom: none;
+}
+
+tbody tr:hover {
+    background: var(--surface-2);
+}
+
+/* Defaulter highlight — red row for Unpaid students */
+tbody tr.unpaid-row {
+    background: var(--red-bg);
+}
+
+tbody tr.unpaid-row:hover {
+    background: #fee2e2;
+}
+
+td {
+    padding: .72rem 1rem;
+    font-size: .84rem;
+    vertical-align: middle;
+}
+
+
+/* ── 12. Cell Type Styles ──────────────────────────────────────────────────── */
+.c-name {
+    font-weight: 500;
+}
+
+.c-roll {
+    font-family: var(--mono);
+    font-size: .74rem;
+    color: var(--ink-3);
+}
+
+.c-batch {
+    display: inline-block;
+    font-size: .69rem;
+    font-family: var(--mono);
+    background: var(--surface-3);
+    border: 1px solid var(--border);
+    border-radius: var(--r-xs);
+    padding: .08rem .4rem;
+    color: var(--ink-2);
+    max-width: 190px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.c-amt {
+    font-family: var(--mono);
+    font-size: .79rem;
+}
+
+.c-zero {
+    color: var(--ink-3);
+}
+
+.c-date {
+    font-family: var(--mono);
+    font-size: .76rem;
+    color: var(--ink-2);
+}
+
+
+/* ── 13. Status Badges ─────────────────────────────────────────────────────── */
+.badge {
+    display: inline-flex;
+    align-items: center;
+    gap: .32rem;
+    padding: .18rem .6rem;
+    border-radius: 20px;
+    font-size: .7rem;
+    font-weight: 600;
+    font-family: var(--mono);
+    letter-spacing: .02em;
+}
+
+.badge::before {
+    content: '';
+    width: 5px;
+    height: 5px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
+.badge-paid {
+    background: var(--green-bg);
+    color: var(--green);
+    border: 1px solid var(--green-bd);
+}
+
+.badge-paid::before {
+    background: var(--green);
+}
+
+.badge-unpaid {
+    background: var(--red-bg);
+    color: var(--red);
+    border: 1px solid var(--red-bd);
+}
+
+.badge-unpaid::before {
+    background: var(--red);
+}
+
+
+/* ── 14. Empty & Loading States ────────────────────────────────────────────── */
+.state-cell {
+    text-align: center;
+    padding: 3.5rem 1rem;
+    color: var(--ink-3);
+}
+
+.state-cell p {
+    font-size: .86rem;
+    margin-top: .55rem;
+}
+
+.spinner {
+    display: inline-block;
+    width: 20px;
+    height: 20px;
+    border: 2px solid var(--border-dk);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: spin .65s linear infinite;
+}
+
+@keyframes spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+
+/* ── 15. Pagination ────────────────────────────────────────────────────────── */
+.pagination {
+    display: flex;
+    align-items: center;
+    gap: .35rem;
+    padding: .7rem 1rem;
+    border-top: 1px solid var(--border);
+    background: var(--surface-2);
+}
+
+.pg-info {
+    font-size: .73rem;
+    font-family: var(--mono);
+    color: var(--ink-3);
+    flex: 1;
+}
+
+.pg-btn {
+    min-width: 27px;
+    height: 27px;
+    padding: 0 .35rem;
+    border: 1px solid var(--border-dk);
+    border-radius: var(--r-xs);
+    background: var(--surface);
+    color: var(--ink-2);
+    font-family: var(--mono);
+    font-size: .73rem;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background var(--t);
+}
+
+.pg-btn:hover:not(:disabled) {
+    background: var(--surface-3);
+}
+
+.pg-btn.active {
+    background: var(--accent);
+    color: #fff;
+    border-color: var(--accent);
+}
+
+.pg-btn:disabled {
+    opacity: .33;
+    cursor: default;
+}
+
+
+/* ── 16. Upload Modals ─────────────────────────────────────────────────────── */
+.modal-bg {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(15, 14, 12, .48);
+    z-index: 500;
+    align-items: center;
+    justify-content: center;
+    backdrop-filter: blur(4px);
+}
+
+.modal-bg.open {
+    display: flex;
+}
+
+.modal {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r-lg);
+    padding: 2rem;
+    width: 460px;
+    max-width: 95vw;
+    box-shadow: var(--sh);
+    animation: slideUp .22s ease;
+}
+
+@keyframes slideUp {
+    from {
+        opacity: 0;
+        transform: translateY(14px) scale(.97);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.modal-title {
+    font-family: var(--serif);
+    font-size: 1.28rem;
+    margin-bottom: .25rem;
+}
+
+.modal-sub {
+    font-size: .78rem;
+    color: var(--ink-3);
+    margin-bottom: 1.1rem;
+}
+
+/* CSV format hint */
+.csv-hint {
+    background: var(--surface-2);
+    border: 1px solid var(--border);
+    border-radius: var(--r-sm);
+    padding: .7rem .9rem;
+    font-family: var(--mono);
+    font-size: .69rem;
+    color: var(--ink-2);
+    line-height: 1.85;
+    margin-bottom: 1.1rem;
+}
+
+.csv-hint b {
+    color: var(--ink);
+}
+
+/* Drag-and-drop zone */
+.drop-zone {
+    border: 2px dashed var(--border-dk);
+    border-radius: var(--r);
+    padding: 1.8rem 1rem;
+    text-align: center;
+    cursor: pointer;
+    transition: border-color var(--t), background var(--t);
+    margin-bottom: 1.1rem;
+}
+
+.drop-zone:hover,
+.drop-zone.over {
+    border-color: var(--accent);
+    background: var(--accent-lt);
+}
+
+.drop-zone input[type="file"] {
+    display: none;
+}
+
+.dz-text {
+    font-size: .82rem;
+    color: var(--ink-3);
+    margin-top: .45rem;
+}
+
+.dz-name {
+    font-family: var(--mono);
+    font-size: .74rem;
+    color: var(--accent);
+    margin-top: .35rem;
+    word-break: break-all;
+}
+
+.modal-actions {
+    display: flex;
+    gap: .55rem;
+    justify-content: flex-end;
+    margin-top: .9rem;
+}
+
+/* Inline upload result */
+.upload-result {
+    margin-top: .85rem;
+    padding: .65rem .9rem;
+    border-radius: var(--r-sm);
+    font-size: .78rem;
+    font-family: var(--mono);
+    line-height: 1.7;
+    display: none;
+}
+
+.upload-result.success {
+    background: var(--green-bg);
+    border: 1px solid var(--green-bd);
+    color: var(--green);
+}
+
+.upload-result.error {
+    background: var(--red-bg);
+    border: 1px solid var(--red-bd);
+    color: var(--red);
+}
+
+
+/* ── 17. Toast Notifications ───────────────────────────────────────────────── */
+#toast-root {
+    position: fixed;
+    bottom: 1.4rem;
+    right: 1.4rem;
+    display: flex;
+    flex-direction: column;
+    gap: .4rem;
+    z-index: 999;
+}
+
+.toast {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: var(--r-sm);
+    padding: .6rem .95rem;
+    font-size: .81rem;
+    max-width: 340px;
+    box-shadow: var(--sh);
+    animation: toastIn .2s ease;
+}
+
+@keyframes toastIn {
+    from {
+        opacity: 0;
+        transform: translateX(12px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+.toast.t-success {
+    border-left: 3px solid var(--green);
+}
+
+.toast.t-error {
+    border-left: 3px solid var(--red);
+}
+
+.toast.t-info {
+    border-left: 3px solid var(--accent);
+}
+
+
+/* ── 18. Responsive ────────────────────────────────────────────────────────── */
+@media (max-width: 1024px) {
+    .stats-row {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 640px) {
+    main {
+        padding: 1rem 1rem 3rem;
+    }
+
+    .stats-row {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .controls-card {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .search-box input {
+        width: 100%;
+    }
+
+    .ctrl-sep {
+        display: none;
+    }
+}
