@@ -621,22 +621,30 @@ td {
     }
 }
 
-
-/* ── 15. Pagination ────────────────────────────────────────────────────────── */
 .pagination {
     display: flex;
     align-items: center;
-    gap: .35rem;
+    justify-content: space-between;
+    gap: .75rem;
     padding: .7rem 1rem;
     border-top: 1px solid var(--border);
     background: var(--surface-2);
+    flex-wrap: wrap;
 }
 
 .pg-info {
     font-size: .73rem;
     font-family: var(--mono);
     color: var(--ink-3);
-    flex: 1;
+    flex: 1 1 220px;
+}
+
+#js-pg-btns {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: flex-end;
+    gap: .35rem;
+    width: 150px; /* adjust 130–170px if needed */
 }
 
 .pg-btn {
@@ -655,22 +663,6 @@ td {
     justify-content: center;
     transition: background var(--t);
 }
-
-.pg-btn:hover:not(:disabled) {
-    background: var(--surface-3);
-}
-
-.pg-btn.active {
-    background: var(--accent);
-    color: #fff;
-    border-color: var(--accent);
-}
-
-.pg-btn:disabled {
-    opacity: .33;
-    cursor: default;
-}
-
 
 /* ── 16. Upload Modals ─────────────────────────────────────────────────────── */
 .modal-bg {

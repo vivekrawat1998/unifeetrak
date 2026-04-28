@@ -26,7 +26,7 @@
 
 /* ── Config ─────────────────────────────────────────────────────────────────── */
 const Config = {
-    API_BASE: "https://unifeetrak.onrender.com",        // same-origin — Flask serves this HTML file
+    API_BASE: "https://unifeetrak.onrender.com/",        // same-origin — Flask serves this HTML file
     PAGE_SIZE: 15,
     MONTHS: [
         "January", "February", "March", "April", "May", "June",
@@ -68,51 +68,30 @@ const API = (() => {
     }
 
     return {
-        /**
-         * GET /api/students?month=&year=
-         * Main data endpoint — returns all students LEFT JOINed with fee status
-         * for the given month + year. This single query drives the entire table.
-         */
-        getStudents: (m, y) => _fetch(`/api/students?month=${m}&year=${y}`),
-
-        /**
-         * GET /api/fees/stats?month=&year=
-         * Aggregate counts for the four stat cards.
-         */
-        getStats: (m, y) => _fetch(`/api/fees/stats?month=${m}&year=${y}`),
-
-        /**
-         * GET /api/students/batches
-         * Distinct batch names for the Batch filter dropdown.
-         */
-        getBatches: () => _fetch("/api/students/batches"),
-
-        /**
-         * GET /api/students/semesters[?batch=]
-         * Distinct semesters, optionally scoped to a specific batch.
-         */
-        getSemesters: (b = "") =>
-            _fetch(`/api/students/semesters${b ? "?batch=" + encodeURIComponent(b) : ""}`),
-
-        /**
-         * POST /api/fees/upload   (multipart FormData with "file" field)
-         * CSV bulk-upsert into the fees table.
-         */
-        uploadFees: fd => _fetch("/api/fees/upload", { method: "POST", body: fd }),
-
-        /**
-         * POST /api/students/upload  (multipart FormData with "file" field)
-         * CSV bulk-upsert into the students table.
-         */
-        uploadStudents: fd => _fetch("/api/students/upload", { method: "POST", body: fd }),
+        getStudents: (m, y, batchYear = "", batch = "") => {
+            const p = new URLSearchParams({ month: m, year: y });
+            if (batch)          p.set("batch",      batch);
+            else if (batchYear) p.set("batch_year", batchYear);
+            return _fetch(`/api/students?${p}`);
+        },
+        getStats: (m, y, batchYear = "", batch = "") => {
+            const p = new URLSearchParams({ month: m, year: y });
+            if (batch)          p.set("batch",      batch);
+            else if (batchYear) p.set("batch_year", batchYear);
+            return _fetch(`/api/fees/stats?${p}`);
+        },
+        getBatches:    (year = "") => _fetch(`/api/students/batches${year ? "?year=" + encodeURIComponent(year) : ""}`),
+        getSemesters:  (b = "")   => _fetch(`/api/students/semesters${b ? "?batch=" + encodeURIComponent(b) : ""}`),
+        uploadFees:    fd => _fetch("/api/fees/upload",     { method: "POST", body: fd }),
+        uploadStudents:fd => _fetch("/api/students/upload", { method: "POST", body: fd }),
     };
 })();
 
 
 /* ── Filters ────────────────────────────────────────────────────────────────── */
 const Filters = {
-    month() { return parseInt(document.getElementById("ctrl-month").value); },
-    year() { return parseInt(document.getElementById("ctrl-year").value); },
+    month() { return new Date().getMonth() + 1; },
+    year()  { return new Date().getFullYear(); },
     batch() { return document.getElementById("ctrl-batch").value.trim(); },
     semester() { return document.getElementById("ctrl-semester").value.trim(); },
     status() { return document.getElementById("ctrl-status").value.trim(); },
@@ -294,10 +273,14 @@ const DataLoader = {
      * round-trips, then updates the table and stat cards together.
      */
     async load() {
-        const m = Filters.month();
-        const y = Filters.year();
+        const m     = Filters.month();
+        const y     = Filters.year();
+        const batch = Filters.batch();
+        // batchYear is NOT derived from the year dropdown —
+        // the year filter controls the fee period, not which students to show.
+        // batch_year is only sent when user explicitly picks a specific batch.
+        const batchYear = "";
 
-        // Update period badge in the sticky header
         document.getElementById("js-period").textContent =
             `${Config.MONTHS[m - 1]} ${y}`;
 
@@ -307,14 +290,12 @@ const DataLoader = {
 
         try {
             const [studRes, statsRes] = await Promise.all([
-                API.getStudents(m, y),
-                API.getStats(m, y),
+                API.getStudents(m, y, batchYear, batch),
+                API.getStats(m, y, batchYear, batch),
             ]);
-
             State.setData(studRes.data || []);
             StatsBar.update(statsRes);
             TableRenderer.render();
-
         } catch (err) {
             TableRenderer.showError("Could not load data — is the Flask server running?");
             Toast.show(err.message, "error");
@@ -325,57 +306,23 @@ const DataLoader = {
 
 /* ── DropdownInit ───────────────────────────────────────────────────────────── */
 const DropdownInit = {
-    /**
-     * init() — called ONCE at boot.
-     * Populates month, year, and batch dropdowns, then sets defaults
-     * to the current calendar month + year.
-     */
     async init() {
-        // Month select
-        const mSel = document.getElementById("ctrl-month");
-        mSel.innerHTML = "";
-        Config.MONTHS.forEach((name, i) => mSel.appendChild(new Option(name, i + 1)));
-
-        // Year select — range 2022–2030 covers past and future data
-        const ySel = document.getElementById("ctrl-year");
-        ySel.innerHTML = "";
-        for (let y = 2022; y <= 2030; y++) ySel.appendChild(new Option(y, y));
-
-        // Default to current month + year on first load only
-        const now = new Date();
-        mSel.value = now.getMonth() + 1;
-        ySel.value = now.getFullYear();
-
-        // Batch dropdown from API
-        await this.refreshBatches();
+        await this.refreshBatches("");  // load all batches — not scoped to year
     },
 
-    /**
-     * refreshBatches() — called after a student CSV upload.
-     * Re-fetches batch names from the API and rebuilds the Batch dropdown
-     * while PRESERVING the user's current month, year, and batch selection.
-     * Never resets ctrl-month or ctrl-year.
-     */
-    async refreshBatches() {
+    // Refresh batch dropdown scoped to selected year
+    async refreshBatches(year = "") {
         try {
-            const res      = await API.getBatches();
-            const sel      = document.getElementById("ctrl-batch");
-            const prevBatch = sel.value;   // save current selection
-
-            sel.innerHTML = '<option value="">All Batches</option>';
+            const res       = await API.getBatches(year);
+            const sel       = document.getElementById("ctrl-batch");
+            const prevBatch = sel.value;
+            sel.innerHTML   = '<option value="">All Batches</option>';
             (res.data || []).forEach(b => sel.appendChild(new Option(b, b)));
-
-            // Restore the batch the user had selected if it still exists
-            if ([...sel.options].some(o => o.value === prevBatch)) {
-                sel.value = prevBatch;
-            }
-        } catch { /* silently ignore — batches are optional */ }
+            if ([...sel.options].some(o => o.value === prevBatch)) sel.value = prevBatch;
+            else sel.value = "";
+        } catch {}
     },
 
-    /**
-     * refreshSemesters() — called when the batch filter changes.
-     * Rebuilds the Semester dropdown scoped to the selected batch.
-     */
     async refreshSemesters(batch = "") {
         const sel  = document.getElementById("ctrl-semester");
         const prev = sel.value;
@@ -383,9 +330,8 @@ const DropdownInit = {
         try {
             const res = await API.getSemesters(batch);
             (res.data || []).forEach(s => sel.appendChild(new Option(s, s)));
-            // Restore previous selection if it still exists
             if ([...sel.options].some(o => o.value === prev)) sel.value = prev;
-        } catch { /* silently ignore */ }
+        } catch {}
     },
 };
 
@@ -421,16 +367,10 @@ const SortController = {
 /* ── FilterController ───────────────────────────────────────────────────────── */
 const FilterController = {
     init() {
-        // Month / Year → triggers a fresh API call (data changes by period)
-        ["ctrl-month", "ctrl-year"].forEach(id => {
-            document.getElementById(id).addEventListener("change", () => DataLoader.load());
-        });
-
-        // Batch → refresh semesters dropdown, then re-render client-side
         document.getElementById("ctrl-batch").addEventListener("change", async () => {
             await DropdownInit.refreshSemesters(Filters.batch());
             State.setPage(1);
-            TableRenderer.render();
+            await DataLoader.load();
         });
 
         // Semester, Status, Search → pure client-side re-render (no API call)
@@ -565,8 +505,7 @@ const StudentsModal = makeModal({
     dzId: "dz-s", fiId: "fi-s", fnId: "fn-s", btnId: "btn-s", urId: "ur-s",
     apiFn: fd => API.uploadStudents(fd),
     onSuccess: async () => {
-        // Only refresh the batch dropdown (preserves month/year selection)
-        await DropdownInit.refreshBatches();
+        await DropdownInit.refreshBatches("");
         await DataLoader.load();
     },
 });
@@ -581,7 +520,6 @@ const FeesModal = makeModal({
 });
 
 
-/* ── Exporter ───────────────────────────────────────────────────────────────── */
 const Exporter = {
     /**
      * Triggers a server-side CSV download via the export endpoint.
@@ -595,7 +533,8 @@ const Exporter = {
             batch: Filters.batch(),
             status: Filters.status(),
         });
-        window.location.href = `/api/fees/export?${params}`;
+
+        window.location.href = `${Config.API_BASE}/api/fees/export?${params.toString()}`;
         Toast.show("Preparing download…", "info");
     },
 };
