@@ -32,7 +32,7 @@ from routes.fees    import fees_bp
 
 def create_app() -> Flask:
     """Application factory — called by gunicorn in production."""
-    app = Flask(__name__, static_folder="static", static_url_path="")
+    app = Flask(__name__, static_folder="static")
     CORS(app)
 
     # ── Blueprints ─────────────────────────────────────────────────────────
